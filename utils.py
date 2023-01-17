@@ -2,6 +2,7 @@ import win32gui
 import cv2
 import pytesseract
 import numpy as np
+import re
 
 
 def findTitle(window_title):
@@ -27,73 +28,55 @@ def findTitle(window_title):
     return -1
 
 
-# 细化函数，输入需要细化的图片（经过二值化处理的图片）和映射矩阵array
-# 这个函数将根据算法，运算出中心点的对应值
-def Thin(image, array):
-    h, w = image.shape
-    iThin = image
-
-    for i in range(h):
-        for j in range(w):
-            if image[i, j] == 0:
-                a = [1] * 9
-                for k in range(3):
-                    for l in range(3):
-                        # 如果3*3矩阵的点不在边界且这些值为零，也就是黑色的点
-                        if -1 < (i - 1 + k) < h and -1 < (j - 1 + l) < w and iThin[i - 1 + k, j - 1 + l] == 0:
-                            a[k * 3 + l] = 0
-                sum = a[0] * 1 + a[1] * 2 + a[2] * 4 + a[3] * 8 + a[5] * 16 + a[6] * 32 + a[7] * 64 + a[8] * 128
-                iThin[i, j] = array[sum] * 255
-    return iThin
-
-
-# 映射表
-array = [0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1,
-         1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1,
-         0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1,
-         1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1,
-         1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-         1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0, 1,
-         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-         0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1,
-         1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1,
-         0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1,
-         1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0,
-         1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-         1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0,
-         1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0, 0,
-         1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 0, 0, 1, 0, 0, 0]
-
-
-def img_resize(image):
+def imgResize(image):
     height, width = image.shape[0], image.shape[1]
     # 设置新的图片分辨率框架
-    width_new = 200
-    height_new = 150
+    width_new = 400
+    height_new = 300
     # 判断图片的长宽比率
     if width / height >= width_new / height_new:
         img_new = cv2.resize(image, (width_new, int(height * width_new / width)))
     else:
         img_new = cv2.resize(image, (int(width * height_new / height), height_new))
-    return img_new
+    return img_new[50:390, :]
 
 
-testImg = cv2.imread('test.jpg')
-y = testImg.shape[0]
-x = testImg.shape[1]
-testImg = testImg[7:25, 42:68]
-testImg = cv2.GaussianBlur(testImg, (3, 3), 0)
-testImg = img_resize(testImg)
-gray = cv2.cvtColor(testImg, cv2.COLOR_BGR2GRAY)
-ret, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-kernel = np.ones((9, 9), np.uint8)
-erode = ~cv2.erode(~binary, kernel, 1000000)
-cv2.imshow('test', erode)
-cv2.waitKey(1000)
-# iThin_2 = Thin(~binary.copy(), array)
-# cv2.imshow('test', iThin_2)
-# cv2.waitKey(5000)
-config = r'--oem 3 --psm 6 outputbase digits'
-string = pytesseract.image_to_string(erode, lang='eng', config=config)
-print(string)
+def findArrow(image):
+    image = image[7:26, 74:95]
+    grayImg = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    ret, binaryImg = cv2.threshold(grayImg, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    height, width = binaryImg.shape[0], binaryImg.shape[1]
+    whitePixel = 0
+    for i in range(height):
+        for j in range(width):
+            if binaryImg[i, j] == 255:
+                whitePixel = whitePixel + 1
+    if whitePixel / (height * width) > 0.1:
+        return 1
+    else:
+        return -1
+
+
+def getWindPower():
+    rawImg = cv2.imread('test.jpg')
+    y = rawImg.shape[0]
+    x = rawImg.shape[1]
+    ImgNumberPart = rawImg[7:25, 42:68]
+    # ImgNumberPart = cv2.GaussianBlur(ImgNumberPart, (3, 3), 0)
+    ImgNumberPart = imgResize(ImgNumberPart)
+    grayImg = cv2.cvtColor(ImgNumberPart, cv2.COLOR_BGR2GRAY)
+    ret, binaryImg = cv2.threshold(grayImg, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    kernel = np.ones((15, 15), np.uint8)
+    erodeImg = ~cv2.erode(~binaryImg, kernel, 1000)
+    # cv2.imshow('test', erodeImg)
+    # cv2.waitKey(2000)
+    config = r'--oem 3 --psm 6 outputbase digits'
+    string = pytesseract.image_to_string(erodeImg, lang='eng', config=config)
+    print(string)
+    string = re.sub(r'\D', '', string)  # 滤除非数字字符
+    if string == '':
+        return 'NONE'
+    print(int(string) * findArrow(rawImg))
+    return int(string) * findArrow(rawImg)
+
+# getWindPower()

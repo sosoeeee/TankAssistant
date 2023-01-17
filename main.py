@@ -75,6 +75,7 @@ class WindowCtl:
         img = screen.grabWindow(hwnd, x=int(x1 + (x2-x1)*loc[0]), y=int(y1 + (y2-y1)*loc[1]), width=107, height=45).toImage()
         # img = screen.grabWindow(hwnd).toImage()
         img.save('test.jpg')
+        self.calculateWindow.windPower.setText(str(getWindPower()))
 
         self.threadRuning = False
 
