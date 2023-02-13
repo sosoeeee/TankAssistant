@@ -58,6 +58,7 @@ class Thread(QThread):
 class WindowCtl:
     def __init__(self):
         self.threadRuning = False
+        self.pointIsCollect = False
         self.calculateWindow = CalculateWindow()
         self.collectWindow = CollectWindow()
         self.iniSlots()
@@ -95,8 +96,8 @@ class WindowCtl:
         self.threadRuning = True
 
         # 查找指定窗口
-        # window_title = 'ShellShock Live'
-        window_title = 'test.txt - 记事本'
+        window_title = 'ShellShock Live'
+        # window_title = 'test.txt - 记事本'
         hwnd = findTitle(window_title)
         # print(hwnd)
         if hwnd != -1:
@@ -105,9 +106,9 @@ class WindowCtl:
             hwnd = findTitle(window_title)
             x1, y1, x2, y2 = win32gui.GetWindowRect(hwnd)
             if window:
-                self.collectWindow.hint.setText('找到窗口，3s后开始收集坐标')
+                self.collectWindow.hint.setText('找到窗口，2s后开始收集坐标')
             else:
-                self.calculateWindow.hint.setText('找到窗口，3s后开始收集坐标')
+                self.calculateWindow.hint.setText('找到窗口，2s后开始收集坐标')
         else:
             if window:
                 self.collectWindow.hint.setText('未找到游戏窗口')
@@ -127,92 +128,117 @@ class WindowCtl:
         else:
             self.calculateWindow.windPower.setText(str(getWindPower()))
 
-
-        self.threadRuning = False
-
-        curPoint = 1
-        while 1:
-            print(curPoint)
-            time.sleep(3)
-            p = win32api.GetCursorPos()
-            if x1 <= p[0] <= x2 and y1 <= p[1] <= y2:
-                if curPoint == 1:
-                    if window:
-                        self.collectWindow.point_1.setText(
-                            '(%.2f, %.2f)' % (
-                                round(float(p[0] - x1) / (x2 - x1), 3), round(float(p[1] - y1) / (y2 - y1), 3)))
-                        self.collectWindow.hint.setText('成功收集第%d个坐标\n3s后收集下一个' % curPoint)
+        if self.pointIsCollect is False:
+            curPoint = 1
+            while 1:
+                print(curPoint)
+                time.sleep(2)
+                p = win32api.GetCursorPos()
+                if x1 <= p[0] <= x2 and y1 <= p[1] <= y2:
+                    if curPoint == 1:
+                        if window:
+                            self.collectWindow.point_1.setText(
+                                '(%.2f, %.2f)' % (
+                                    round(float(p[0] - x1) / (x2 - x1), 3), round(float(p[1] - y1) / (y2 - y1), 3)))
+                            self.collectWindow.hint.setText('成功收集第%d个坐标\n2s后收集下一个' % curPoint)
+                        else:
+                            self.calculateWindow.point_1.setText(
+                                '(%.2f, %.2f)' % (
+                                    round(float(p[0] - x1) / (x2 - x1), 3), round(float(p[1] - y1) / (y2 - y1), 3)))
+                            self.calculateWindow.hint.setText('成功收集第%d个坐标\n2s后收集下一个' % curPoint)
+                        curPoint = curPoint + 1
+                    elif curPoint == 2:
+                        if window:
+                            self.collectWindow.point_2.setText(
+                                '(%.2f, %.2f)' % (
+                                    round(float(p[0] - x1) / (x2 - x1), 3), round(float(p[1] - y1) / (y2 - y1), 3)))
+                            self.collectWindow.hint.setText('成功收集第%d个坐标\n2s后收集下一个' % curPoint)
+                        else:
+                            self.calculateWindow.point_2.setText(
+                                '(%.2f, %.2f)' % (
+                                    round(float(p[0] - x1) / (x2 - x1), 3), round(float(p[1] - y1) / (y2 - y1), 3)))
+                            self.calculateWindow.hint.setText('成功收集第%d个坐标\n2s后收集下一个' % curPoint)
+                        curPoint = curPoint + 1
                     else:
-                        self.calculateWindow.point_1.setText(
-                            '(%.2f, %.2f)' % (
-                                round(float(p[0] - x1) / (x2 - x1), 3), round(float(p[1] - y1) / (y2 - y1), 3)))
-                        self.calculateWindow.hint.setText('成功收集第%d个坐标\n3s后收集下一个' % curPoint)
-                    curPoint = curPoint + 1
-                elif curPoint == 2:
-                    if window:
-                        self.collectWindow.point_2.setText(
-                            '(%.2f, %.2f)' % (
-                                round(float(p[0] - x1) / (x2 - x1), 3), round(float(p[1] - y1) / (y2 - y1), 3)))
-                        self.collectWindow.hint.setText('成功收集第%d个坐标\n3s后收集下一个' % curPoint)
-                    else:
-                        self.calculateWindow.point_2.setText(
-                            '(%.2f, %.2f)' % (
-                                round(float(p[0] - x1) / (x2 - x1), 3), round(float(p[1] - y1) / (y2 - y1), 3)))
-                        self.calculateWindow.hint.setText('成功收集第%d个坐标\n3s后收集下一个' % curPoint)
-                    curPoint = curPoint + 1
+                        if window:
+                            self.collectWindow.point_3.setText(
+                                '(%.2f, %.2f)' % (
+                                    round(float(p[0] - x1) / (x2 - x1), 3), round(float(p[1] - y1) / (y2 - y1), 3)))
+                            self.collectWindow.hint.setText('成功收集所有坐标')
+                        else:
+                            self.calculateWindow.point_3.setText(
+                                '(%.2f, %.2f)' % (
+                                    round(float(p[0] - x1) / (x2 - x1), 3), round(float(p[1] - y1) / (y2 - y1), 3)))
+                            self.calculateWindow.hint.setText('成功收集所有坐标')
+                        self.threadRuning = False
+                        self.pointIsCollect = True
+                        break
                 else:
                     if window:
-                        self.collectWindow.point_3.setText(
-                            '(%.2f, %.2f)' % (
-                                round(float(p[0] - x1) / (x2 - x1), 3), round(float(p[1] - y1) / (y2 - y1), 3)))
-                        self.collectWindow.hint.setText('成功收集所有坐标')
+                        self.collectWindow.hint.setText('鼠标不在游戏窗口内')
                     else:
-                        self.calculateWindow.point_3.setText(
-                            '(%.2f, %.2f)' % (
-                                round(float(p[0] - x1) / (x2 - x1), 3), round(float(p[1] - y1) / (y2 - y1), 3)))
-                        self.calculateWindow.hint.setText('成功收集所有坐标')
-                    self.threadRuning = False
-                    break
+                        self.calculateWindow.hint.setText('鼠标不在游戏窗口内')
+        else:
+            if window:
+                self.collectWindow.hint.setText('重新采集风力信息')
             else:
-                if window:
-                    self.collectWindow.hint.setText('鼠标不在游戏窗口内')
-                else:
-                    self.calculateWindow.hint.setText('鼠标不在游戏窗口内')
+                self.calculateWindow.hint.setText('重新采集风力信息')
 
     def storeImf(self):
         dataList = []
         strPoint = self.collectWindow.point_1.text()
         point = parse('({}, {})', strPoint)
-        x = float(point[0])
-        y = float(point[1])
-        dataList.append(x)
-        dataList.append(y)
+        if point is not None:
+            x = float(point[0])
+            y = float(point[1])
+            dataList.append(x)
+            dataList.append(y)
 
         strPoint = self.collectWindow.point_2.text()
         point = parse('({}, {})', strPoint)
-        x = float(point[0])
-        y = float(point[1])
-        dataList.append(x)
-        dataList.append(y)
+        if point is not None:
+            x = float(point[0])
+            y = float(point[1])
+            dataList.append(x)
+            dataList.append(y)
 
         strPoint = self.collectWindow.point_3.text()
         point = parse('({}, {})', strPoint)
-        x = float(point[0])
-        y = float(point[1])
-        dataList.append(x)
-        dataList.append(y)
+        if point is not None:
+            x = float(point[0])
+            y = float(point[1])
+            dataList.append(x)
+            dataList.append(y)
 
         strWP = self.collectWindow.windPower.text()
-        dataList.append(int(strWP))
+        try:
+            dataList.append(int(strWP))
+        except ValueError:
+            pass
 
         strPower = self.collectWindow.powerEdit.text()
-        dataList.append(int(strPower))
-        strAngle = self.collectWindow.angleEdit.text()
-        dataList.append(int(strAngle))
+        if strPower != '':
+            dataList.append(int(strPower))
 
-        df = pd.DataFrame(dataList).T
-        df.to_csv('data.csv', mode='a', index=False, header=False, sep=',')
-        print(dataList)
+        strAngle = self.collectWindow.angleEdit.text()
+        if strAngle != '':
+            dataList.append(int(strAngle))
+
+        if len(dataList) == 9:
+            df = pd.DataFrame(dataList).T
+            df.to_csv('data.csv', mode='a', index=False, header=False, sep=',')
+            print(dataList)
+        else:
+            self.collectWindow.hint.setText('data is incomplete!')
+            self.pointIsCollect = False
+            return
+
+        self.collectWindow.point_3.setText(' ')
+        self.collectWindow.point_2.setText(' ')
+        self.collectWindow.point_1.setText(' ')
+        self.collectWindow.windPower.setText(' ')
+
+        self.pointIsCollect = False
 
 
 if __name__ == "__main__":
